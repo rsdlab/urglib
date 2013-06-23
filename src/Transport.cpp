@@ -237,17 +237,25 @@ bool Transport::onCmdMD()
   int stat = atoi(buffer);
   //  std::cout << "Status : " << stat << std::endl;
   if(stat == 99) {
+    m_pUrg->LockData();
+
+    m_pUrg->m_pData->clear();
     readBlock(buffer, 5);
     m_pUrg->m_pData->timestamp = decodeCharactor(buffer, 4);
     while(1) {
       readLine(buffer);
       int len = strlen(buffer);
-      if (len == 0) {
+      //      std::cout << " - Length: " << len << " data received." << std::endl;
+      if(len == 0) {
 	break;
       }
+      for(int i = 0;i < len;i += 3) {
+	m_pUrg->m_pData->push(decodeCharactor(buffer+i, 3));
+      }
     }
+    m_pUrg->UnlockData();
+    //    std::cout << " - " << m_pUrg->m_pData->length << " data received." << std::endl;
   }
-
   return true;
 }
 
