@@ -52,11 +52,17 @@ int Transport::waitCommand(char* command) {
 }
 
 
-bool Transport::receive()
+bool Transport::receive(const char* expectedCommand)
 {
   char command[3];
   int index = waitCommand(command);
   command[2] = 0;
+  if (expectedCommand != NULL) {
+    while (expectedCommand[0] != command[0] || expectedCommand[1] != command[1]) {
+      index = waitCommand(command);
+    }
+  }
+
   //  std::cout << "Received Command: " << command << std::endl;
   m_Packet.cmd[0] = command[0];
   m_Packet.cmd[1] = command[1];
@@ -247,7 +253,7 @@ bool Transport::onCmdMD()
 
 bool Transport::onCmdMS()
 {
-  //std::cout << "onCmdMS" << std::endl;
+  std::cout << "onCmdMS" << std::endl;
   char buffer[128];
   readLine(buffer);
   readLine(buffer);
@@ -261,6 +267,7 @@ bool Transport::onCmdMS()
     while(1) {
       readLine(buffer);
       int len = strlen(buffer);
+      std::cout << " - Length: " << len << " data received." << std::endl;
       if(len == 0) {
 	break;
       }
@@ -268,6 +275,7 @@ bool Transport::onCmdMS()
 	m_pUrg->m_pData->push(decodeCharactor(buffer+i, 2));
       }
     }
+    std::cout << " - " << m_pUrg->m_pData->length << " data received." << std::endl;
   }
 
 

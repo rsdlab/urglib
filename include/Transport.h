@@ -47,7 +47,7 @@ namespace ssr {
     bool readStringLine(char* buffer);
     uint32_t readIntLine();
 
-    bool receive();
+    bool receive(const char* expectedCmd = NULL);
     bool transmit(const Packet& packet);
 
     bool startSCIP20();

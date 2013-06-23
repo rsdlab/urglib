@@ -1,3 +1,5 @@
+
+
 #include <iostream>
 
 #include "UrgBase.h"
@@ -17,6 +19,7 @@ UrgBase::UrgBase(const char* filename, int baudrate):
   } else {
     std::cout << "Changing to SCIP2.0 ... Already SCIP2.0." << std::endl;
   }
+  reset();
   updateInfo();
 
   std::cout << "Vendor       :" << m_VendorInfo << std::endl;
@@ -71,7 +74,7 @@ void UrgBase::Run()
       onPreSendCommand();
       onPostSendCommand();
 
-      Thread::Sleep(m_Interval); // [ms]
+      //Thread::Sleep(m_Interval); // [ms]
     } catch (TimeOutException& e) {
       std::cerr << "Packet Receiver -- Timeout" << std::endl;
     } catch (CheckSumError& e) {
@@ -98,7 +101,7 @@ bool UrgBase::reset()
 {
   Packet p("RS");
   m_pTransport->transmit(p);
-  return m_pTransport->receive();
+  return m_pTransport->receive("RS");
 }
 
 

@@ -47,7 +47,7 @@ namespace ssr {
 
   public:
   Packet(const char* command = NULL, const uint8_t length = 0) : m_pBuffer(NULL) {
-      std::cout << "Command:" << std::endl;
+      //std::cout << "Command:" << std::endl;
       if(command == NULL) {
 	cmd[0] = cmd[1] = 0;
       } else {
