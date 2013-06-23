@@ -2,6 +2,11 @@
 
 #include <iostream>
 
+#ifdef WIN32
+#define _USE_MATH_DEFINES
+#endif
+
+#include <math.h>
 #include "UrgBase.h"
 
 using namespace ssr;
@@ -21,6 +26,13 @@ UrgBase::UrgBase(const char* filename, int baudrate):
   }
   reset();
   updateInfo();
+
+  m_pData = new RangeData(m_AngleEndStep - m_AngleStartStep);
+  m_pData->angularRes = 2 * M_PI / m_AngleDiv;
+  m_pData->minAngle = -(m_AngleFrontStep - m_AngleStartStep) * m_pData->angularRes;
+  m_pData->maxAngle = (m_AngleEndStep - m_AngleFrontStep) * m_pData->angularRes;
+  m_pData->minRange = m_MinMeasure;
+  m_pData->maxRange = m_MaxMeasure;
 
   std::cout << "Vendor       :" << m_VendorInfo << std::endl;
   std::cout << "Product      :" << m_ProductInfo << std::endl;
@@ -59,7 +71,7 @@ void UrgBase::updateInfo()
   Packet p3("PP");
   m_pTransport->transmit(p3);
   m_pTransport->receive();
-  m_pData = new RangeData(m_AngleEndStep - m_AngleStartStep);
+
 }
 
 void UrgBase::Run()

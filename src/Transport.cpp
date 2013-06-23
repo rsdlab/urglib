@@ -217,7 +217,7 @@ bool Transport::onCmdII()
 }
 
 
-uint32_t Transport::decodeCharactor(char* buffer, uint32_t size)
+uint32_t Transport::decode6BitCharactor(char* buffer, uint32_t size)
 {
   uint32_t retval = 0;
   for(uint32_t i = 0;i < size;i++) {
@@ -226,22 +226,39 @@ uint32_t Transport::decodeCharactor(char* buffer, uint32_t size)
   return retval;
 }
 
+int32_t Transport::decodeCharactor(char* buffer, uint32_t size)
+{
+  char str[16];
+  for(int i = 0;i < size;i++) {
+    str[i] = buffer[i];
+  }
+  buffer[size] = 0;
+  return atoi(str);
+}
+
+
 
 bool Transport::onCmdMD()
 {
   //  std::cout << "onCmdMD" << std::endl;
+  char firstLine[128];
   char buffer[128];
-  readLine(buffer);
+  readLine(firstLine);
   readLine(buffer);
   buffer[2] = 0;
   int stat = atoi(buffer);
   //  std::cout << "Status : " << stat << std::endl;
   if(stat == 99) {
     m_pUrg->LockData();
-
     m_pUrg->m_pData->clear();
+    int32_t startStep = decodeCharactor(firstLine, 4);
+    int32_t endStep = decodeCharactor(firstLine+4, 4);
+    int32_t clustorCount = decodeCharactor(firstLine+8, 2);
+    m_pUrg->m_pData->minAngle = -(m_pUrg->m_AngleFrontStep - startStep) * m_pUrg->m_pData->angularRes;
+    m_pUrg->m_pData->maxAngle = (endStep - m_pUrg->m_AngleFrontStep) * m_pUrg->m_pData->angularRes;
+
     readBlock(buffer, 5);
-    m_pUrg->m_pData->timestamp = decodeCharactor(buffer, 4);
+    m_pUrg->m_pData->timestamp = decode6BitCharactor(buffer, 4);
     while(1) {
       readLine(buffer);
       int len = strlen(buffer);
@@ -250,7 +267,7 @@ bool Transport::onCmdMD()
 	break;
       }
       for(int i = 0;i < len;i += 3) {
-	m_pUrg->m_pData->push(decodeCharactor(buffer+i, 3));
+	m_pUrg->m_pData->push(decode6BitCharactor(buffer+i, 3));
       }
     }
     m_pUrg->UnlockData();
@@ -262,18 +279,24 @@ bool Transport::onCmdMD()
 bool Transport::onCmdMS()
 {
   std::cout << "onCmdMS" << std::endl;
+  char firstLine[128];
   char buffer[128];
-  readLine(buffer);
+  readLine(firstLine);
   readLine(buffer);
   buffer[2] = 0;
   int stat = atoi(buffer);
   //std::cout << "Status : " << stat << std::endl;
   if (stat == 99) {
     m_pUrg->LockData();
-
     m_pUrg->m_pData->clear();
+    int32_t startStep = decodeCharactor(firstLine, 4);
+    int32_t endStep = decodeCharactor(firstLine+4, 4);
+    int32_t clustorCount = decodeCharactor(firstLine+8, 2);
+    m_pUrg->m_pData->minAngle = -(m_pUrg->m_AngleFrontStep - startStep) * m_pUrg->m_pData->angularRes;
+    m_pUrg->m_pData->maxAngle = (endStep - m_pUrg->m_AngleFrontStep) * m_pUrg->m_pData->angularRes;
+
     readLine(buffer); // Time Stamp
-    m_pUrg->m_pData->timestamp = decodeCharactor(buffer, 4);
+    m_pUrg->m_pData->timestamp = decode6BitCharactor(buffer, 4);
     while(1) {
       readLine(buffer);
       int len = strlen(buffer);
@@ -282,7 +305,7 @@ bool Transport::onCmdMS()
 	break;
       }
       for(int i = 0;i < len;i += 2) {
-	m_pUrg->m_pData->push(decodeCharactor(buffer+i, 2));
+	m_pUrg->m_pData->push(decode6BitCharactor(buffer+i, 2));
       }
     }
     m_pUrg->UnlockData();
