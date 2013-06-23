@@ -6,7 +6,7 @@ using namespace ssr;
 using namespace net::ysuga;
 
 UrgBase::UrgBase(const char* filename, int baudrate):
-  m_Endflag(false), m_Interval(1)
+  m_Endflag(false), m_Interval(1), m_pData(NULL)
 {
   std::cout << "Initializaing URG(" << filename << ")" << std::endl;
   m_pSerialPort = new SerialPort(filename, baudrate);
@@ -42,6 +42,7 @@ UrgBase::~UrgBase()
   //  delete m_pTranslator;
   delete m_pTransport;
   delete m_pSerialPort;
+  delete m_pData;
 }
 
 void UrgBase::updateInfo()
@@ -55,6 +56,7 @@ void UrgBase::updateInfo()
   Packet p3("PP");
   m_pTransport->transmit(p3);
   m_pTransport->receive();
+  m_pData = new RangeData(m_AngleEndStep - m_AngleStartStep);
 }
 
 void UrgBase::Run()
@@ -64,7 +66,6 @@ void UrgBase::Run()
   while(!m_Endflag) {
     try {
       m_pTransport->receive();
-      //      m_pTranslator->translate(m_pTransport->getPacket());
       onUpdate();
 
       onPreSendCommand();

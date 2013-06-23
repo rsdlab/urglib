@@ -8,8 +8,36 @@
 
 #define BAUDRATE 115200
 
+
+
 namespace ssr {
   //class Translator;
+
+
+  class RangeData {
+  public:
+    uint32_t timestamp;
+    uint32_t *range;
+    uint32_t length;
+  public:
+  RangeData(uint32_t size) :
+    timestamp(0) , length(0) {
+      range = new uint32_t[size];
+    }
+
+    virtual ~RangeData() {
+      delete range;
+    }
+
+    void clear() {
+      length = 0;
+    }
+
+    void push(uint32_t range_data) {
+      range[length] = range_data;
+      length++;
+    }
+  };
 
   class LIBURG_API UrgBase : public net::ysuga::Thread {
   private:
@@ -42,6 +70,8 @@ namespace ssr {
 
   protected:
   public:
+    RangeData* m_pData;
+
     UrgBase(const char* filename, int baudrate = BAUDRATE);
 
     virtual ~UrgBase();
@@ -65,6 +95,8 @@ namespace ssr {
     virtual void onPostSendCommand() {};
 
     void updateInfo();
+
+  private:
   };
 
 }

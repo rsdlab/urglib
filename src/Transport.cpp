@@ -34,15 +34,7 @@ int Transport::waitCommand(char* command) {
   int retval;
  transport_receive_start:
   while(true) {
-    while(true) {
-      if (m_pSerialPort->GetSizeInRxBuffer() >= 1) {
-	break;
-      }
-      net::ysuga::Thread::Sleep(10);
-    }
-	
-
-    retval = m_pSerialPort->Read(&(command[0]), 1);
+    readBlock(command+0, 1);
     for( int i = 0; i < NUM_CMD;i++) {
       if(command[0] == cmd[i][0]) {
 	goto transport_receive_next;
@@ -50,15 +42,7 @@ int Transport::waitCommand(char* command) {
     }
   }
  transport_receive_next:
-
-  while(true) {
-    if (m_pSerialPort->GetSizeInRxBuffer() >= 1) {
-      break;
-    }
-    net::ysuga::Thread::Sleep(10);
-  }
-	
-  m_pSerialPort->Read(&(command[1]), 1);
+  readBlock(command+1, 1);
   for (int i = 0;i < NUM_CMD;i++) {
     if(command[0] == cmd[i][0] && command[1] == cmd[i][1]) {
       return i;
@@ -114,14 +98,18 @@ bool Transport::transmit(const Packet& packet)
   return true;
 }
 
+bool Transport::readBlock(char* buffer, uint32_t size) {
+  while(m_pSerialPort->GetSizeInRxBuffer() < 1) {
+    net::ysuga::Thread::Sleep(10);
+  }
+  m_pSerialPort->Read(buffer, 1);
+  return true;
+}
 
 bool Transport::readLine(char* buffer) {
   int i = 0;
   while(1) {
-    while(m_pSerialPort->GetSizeInRxBuffer() < 1) {
-      net::ysuga::Thread::Sleep(10);
-    }
-    m_pSerialPort->Read(buffer+i, 1);
+    readBlock(buffer+i, 1);
     if(buffer[i] == 0x0A) {
       buffer[i] = 0;
       break;
@@ -223,6 +211,16 @@ bool Transport::onCmdII()
 }
 
 
+uint32_t Transport::decodeCharactor(char* buffer, uint32_t size)
+{
+  uint32_t retval = 0;
+  for(uint32_t i = 0;i < size;i++) {
+    retval |= (uint32_t)(((uint8_t)buffer[i]) - 0x30) << (6*(size-i-1));
+  }
+  return retval;
+}
+
+
 bool Transport::onCmdMD()
 {
   //  std::cout << "onCmdMD" << std::endl;
@@ -233,8 +231,15 @@ bool Transport::onCmdMD()
   int stat = atoi(buffer);
   //  std::cout << "Status : " << stat << std::endl;
   if(stat == 99) {
-    
-
+    readBlock(buffer, 5);
+    m_pUrg->m_pData->timestamp = decodeCharactor(buffer, 4);
+    while(1) {
+      readLine(buffer);
+      int len = strlen(buffer);
+      if (len == 0) {
+	break;
+      }
+    }
   }
 
   return true;
@@ -250,13 +255,17 @@ bool Transport::onCmdMS()
   int stat = atoi(buffer);
   //std::cout << "Status : " << stat << std::endl;
   if (stat == 99) {
+    m_pUrg->m_pData->clear();
     readLine(buffer); // Time Stamp
-
+    m_pUrg->m_pData->timestamp = decodeCharactor(buffer, 4);
     while(1) {
       readLine(buffer);
       int len = strlen(buffer);
       if(len == 0) {
 	break;
+      }
+      for(int i = 0;i < len;i += 2) {
+	m_pUrg->m_pData->push(decodeCharactor(buffer+i, 2));
       }
     }
   }

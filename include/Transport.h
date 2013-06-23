@@ -54,6 +54,9 @@ namespace ssr {
 
     
   private:
+    bool readBlock(char *buffer, uint32_t size);
+
+    uint32_t decodeCharactor(char* buffer, uint32_t size);
 
     bool onCmdMD();
     bool onCmdMS();
