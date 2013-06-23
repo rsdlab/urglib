@@ -57,6 +57,12 @@ namespace ssr {
       }
       this->pose = rangeData.pose;
       this->orientation = rangeData.orientation;
+
+      this->minAngle = rangeData.minAngle;
+      this->maxAngle = rangeData.maxAngle;
+      this->angularRes = rangeData.angularRes;
+      this->minRange = rangeData.minRange;
+      this->maxRange = rangeData.maxRange;
     }
 
     void operator=(RangeData& rangeData) {
@@ -68,6 +74,12 @@ namespace ssr {
       }
       this->pose = rangeData.pose;
       this->orientation = rangeData.orientation;
+
+      this->minAngle = rangeData.minAngle;
+      this->maxAngle = rangeData.maxAngle;
+      this->angularRes = rangeData.angularRes;
+      this->minRange = rangeData.minRange;
+      this->maxRange = rangeData.maxRange;
     }
 
     virtual ~RangeData() {
