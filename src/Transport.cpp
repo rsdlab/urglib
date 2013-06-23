@@ -261,13 +261,15 @@ bool Transport::onCmdMS()
   int stat = atoi(buffer);
   //std::cout << "Status : " << stat << std::endl;
   if (stat == 99) {
+    m_pUrg->LockData();
+
     m_pUrg->m_pData->clear();
     readLine(buffer); // Time Stamp
     m_pUrg->m_pData->timestamp = decodeCharactor(buffer, 4);
     while(1) {
       readLine(buffer);
       int len = strlen(buffer);
-      std::cout << " - Length: " << len << " data received." << std::endl;
+      //      std::cout << " - Length: " << len << " data received." << std::endl;
       if(len == 0) {
 	break;
       }
@@ -275,7 +277,8 @@ bool Transport::onCmdMS()
 	m_pUrg->m_pData->push(decodeCharactor(buffer+i, 2));
       }
     }
-    std::cout << " - " << m_pUrg->m_pData->length << " data received." << std::endl;
+    m_pUrg->UnlockData();
+    //    std::cout << " - " << m_pUrg->m_pData->length << " data received." << std::endl;
   }
 
 

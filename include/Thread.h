@@ -53,6 +53,18 @@ namespace net {
 #endif
 			}
 
+			Mutex(const Mutex& m) {
+#ifdef WIN32
+			  m_Handle = m.m_Handle;
+#else
+			  m_Handle = m.m_Handle;
+#endif
+			}
+
+			void operator=(const Mutex& m) {
+			  this->m_Handle = m.m_Handle;
+			}
+
 			virtual ~Mutex() {
 #ifdef WIN32
 				::CloseHandle(m_Handle);
@@ -78,6 +90,21 @@ namespace net {
 			  pthread_mutex_unlock(&m_Handle);
 #endif
 			}
+		};
+
+		class LIBTHREAD_API MutexBinder {
+		private:
+		  Mutex m_mutex;
+		public:
+		  MutexBinder(Mutex& m) {
+		    m_mutex = m;
+		    m_mutex.Lock();
+		  }
+
+		  virtual ~MutexBinder() {
+		    m_mutex.Unlock();
+		  }
+
 		};
 
 		class LIBTHREAD_API Thread

@@ -16,13 +16,58 @@ namespace ssr {
 
   class RangeData {
   public:
+    struct {
+      double r;
+      double p;
+      double y;
+    } orientation;
+
+    struct {
+      double x;
+      double y;
+      double z;
+    } pose;
+
+  public:
     uint32_t timestamp;
     uint32_t *range;
     uint32_t length;
+
   public:
-  RangeData(uint32_t size) :
+    double minAngle;
+    double maxAngle;
+    double angularRes;
+    double minRange;
+    double maxRange;
+    
+  public:
+    RangeData(uint32_t size) :
     timestamp(0) , length(0) {
       range = new uint32_t[size];
+      pose.x = pose.y = pose.z = 0;
+      orientation.r = orientation.p = orientation.y = 0;
+    }
+
+    RangeData(RangeData& rangeData) {
+      this->timestamp = rangeData.timestamp;
+      this->length = rangeData.length;
+      range = new uint32_t[length];
+      for(int i=  0;i < length;i++) {
+	range[i] = rangeData.range[i];
+      }
+      this->pose = rangeData.pose;
+      this->orientation = rangeData.orientation;
+    }
+
+    void operator=(RangeData& rangeData) {
+      this->timestamp = rangeData.timestamp;
+      this->length = rangeData.length;
+      range = new uint32_t[length];
+      for(int i=  0;i < length;i++) {
+	range[i] = rangeData.range[i];
+      }
+      this->pose = rangeData.pose;
+      this->orientation = rangeData.orientation;
     }
 
     virtual ~RangeData() {
@@ -69,8 +114,35 @@ namespace ssr {
     char m_SensorStatus[128];
 
   protected:
+
   public:
+    void setOrientation(double r, double p, double y) {
+      m_pData->orientation.r = r;
+      m_pData->orientation.p = p;
+      m_pData->orientation.y = y;
+    }
+
+    void setPose(double x, double y, double z) {
+      m_pData->pose.x = x;
+      m_pData->pose.y = y;
+      m_pData->pose.z = z;
+    }
+
+    net::ysuga::Mutex m_Mutex;
     RangeData* m_pData;
+  public:
+    RangeData& getRangeData() {
+      net::ysuga::MutexBinder b(m_Mutex);
+      return *m_pData;
+    }
+
+    void LockData() {
+      m_Mutex.Lock();
+    }
+
+    void UnlockData() {
+      m_Mutex.Unlock();
+    }
 
     UrgBase(const char* filename, int baudrate = BAUDRATE);
 
