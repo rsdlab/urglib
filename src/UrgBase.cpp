@@ -142,7 +142,7 @@ bool UrgBase::startMeasure(uint32_t startStep,
   buffer[2+4+4+2+1+2] = 0x0A;
 
   m_pSerialPort->Write(buffer, 2+4+4+2+1+2+1);
-  
+  std::cout << " - " << buffer << std::endl;
   m_pTransport->receive();
   Start();
 }
