@@ -266,7 +266,7 @@ bool Transport::onCmdMD()
       if(len == 0) {
 	break;
       }
-      for(int i = 0;i < len;i += 3) {
+      for(int i = 0;i+3 < len;i += 3) {
 	m_pUrg->m_pData->push(decode6BitCharactor(buffer+i, 3));
       }
     }
