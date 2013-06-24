@@ -144,8 +144,12 @@ namespace ssr {
     RangeData* m_pData;
   public:
     RangeData& getRangeData() {
-      net::ysuga::MutexBinder b(m_Mutex);
-      return *m_pData;
+      ///net::ysuga::MutexBinder b(m_Mutex);
+      RangeData d;
+      LockData();
+      d = *m_pData;
+      UnlockData();
+      return d;
     }
 
     void LockData() {
