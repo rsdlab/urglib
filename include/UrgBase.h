@@ -48,7 +48,7 @@ namespace ssr {
       orientation.r = orientation.p = orientation.y = 0;
     }
 
-    RangeData(RangeData& rangeData) {
+    RangeData(const RangeData& rangeData) {
       this->timestamp = rangeData.timestamp;
       this->length = rangeData.length;
       range = new uint32_t[length];
@@ -65,7 +65,7 @@ namespace ssr {
       this->maxRange = rangeData.maxRange;
     }
 
-    void operator=(RangeData& rangeData) {
+    void operator=(const RangeData& rangeData) {
       this->timestamp = rangeData.timestamp;
       this->length = rangeData.length;
       range = new uint32_t[length];
@@ -144,12 +144,8 @@ namespace ssr {
     RangeData* m_pData;
   public:
     RangeData& getRangeData() {
-      ///net::ysuga::MutexBinder b(m_Mutex);
-      RangeData d;
-      LockData();
-      d = *m_pData;
-      UnlockData();
-      return d;
+      net::ysuga::MutexBinder b(m_Mutex);
+      return *m_pData;
     }
 
     void LockData() {

@@ -57,9 +57,9 @@ bool Transport::receive(const char* expectedCommand)
   char command[3];
   int index = waitCommand(command);
   command[2] = 0;
-  std::cout << "Command:" << command << " Received." << std::endl;
+  //  std::cout << "Command:" << command << " Received." << std::endl;
   if (expectedCommand != NULL) {
-    std::cout << "Expect: " << expectedCommand << std::endl;
+    //    std::cout << "Expect: " << expectedCommand << std::endl;
     while (expectedCommand[0] != command[0] || expectedCommand[1] != command[1]) {
       index = waitCommand(command);
     }
@@ -254,7 +254,7 @@ bool Transport::onCmdMD()
   int stat = atoi(buffer);
   //  std::cout << "Status : " << stat << std::endl;
   if(stat == 99) {
-    m_pUrg->LockData();
+    net::ysuga::MutexBinder b(m_pUrg->m_Mutex);
     m_pUrg->m_pData->clear();
     int32_t startStep = decodeCharactor(firstLine, 4);
     int32_t endStep = decodeCharactor(firstLine+4, 4);
@@ -275,15 +275,13 @@ bool Transport::onCmdMD()
 	m_pUrg->m_pData->push(decode6BitCharactor(buffer+i, 3));
       }
     }
-    m_pUrg->UnlockData();
-    //    std::cout << " - " << m_pUrg->m_pData->length << " data received." << std::endl;
   }
   return true;
 }
 
 bool Transport::onCmdMS()
 {
-  std::cout << "onCmdMS" << std::endl;
+  //  std::cout << "onCmdMS" << std::endl;
   char firstLine[128];
   char buffer[128];
   readLine(firstLine);
@@ -293,12 +291,12 @@ bool Transport::onCmdMS()
   //std::cout << "Status : " << stat << std::endl;
   //std::cout << " - " << firstLine << std::endl;
   if (stat == 99) {
-    m_pUrg->LockData();
+    net::ysuga::MutexBinder b(m_pUrg->m_Mutex);
     m_pUrg->m_pData->clear();
     int32_t startStep = decodeCharactor(firstLine, 4);
     int32_t endStep   = decodeCharactor(firstLine+4, 4);
     int32_t clustorCount = decodeCharactor(firstLine+8, 2);
-    std::cout << " - " << startStep << " - " << endStep << std::endl;
+    //    std::cout << " - " << startStep << " - " << endStep << std::endl;
     m_pUrg->m_pData->minAngle = -((int32_t)m_pUrg->m_AngleFrontStep - startStep) * m_pUrg->m_pData->angularRes;
     m_pUrg->m_pData->maxAngle = (endStep - m_pUrg->m_AngleFrontStep) * m_pUrg->m_pData->angularRes;
 
@@ -314,8 +312,6 @@ bool Transport::onCmdMS()
 	m_pUrg->m_pData->push(decode6BitCharactor(buffer+i, 2));
       }
     }
-    m_pUrg->UnlockData();
-    //std::cout << " - " << m_pUrg->m_pData->length << " data received." << std::endl;
   }
 
 
