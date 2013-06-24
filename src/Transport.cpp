@@ -259,7 +259,7 @@ bool Transport::onCmdMD()
     int32_t startStep = decodeCharactor(firstLine, 4);
     int32_t endStep = decodeCharactor(firstLine+4, 4);
     int32_t clustorCount = decodeCharactor(firstLine+8, 2);
-    m_pUrg->m_pData->minAngle = -(m_pUrg->m_AngleFrontStep - startStep) * m_pUrg->m_pData->angularRes;
+    m_pUrg->m_pData->minAngle = -((int32_t)m_pUrg->m_AngleFrontStep - startStep) * m_pUrg->m_pData->angularRes;
     m_pUrg->m_pData->maxAngle = (endStep - m_pUrg->m_AngleFrontStep) * m_pUrg->m_pData->angularRes;
 
     readBlock(buffer, 5);
@@ -283,7 +283,7 @@ bool Transport::onCmdMD()
 
 bool Transport::onCmdMS()
 {
-  //  std::cout << "onCmdMS" << std::endl;
+  std::cout << "onCmdMS" << std::endl;
   char firstLine[128];
   char buffer[128];
   readLine(firstLine);
@@ -298,8 +298,8 @@ bool Transport::onCmdMS()
     int32_t startStep = decodeCharactor(firstLine, 4);
     int32_t endStep   = decodeCharactor(firstLine+4, 4);
     int32_t clustorCount = decodeCharactor(firstLine+8, 2);
-    //    std::cout << " - " << startStep << " - " << endStep << std::endl;
-    m_pUrg->m_pData->minAngle = -(m_pUrg->m_AngleFrontStep - startStep) * m_pUrg->m_pData->angularRes;
+    std::cout << " - " << startStep << " - " << endStep << std::endl;
+    m_pUrg->m_pData->minAngle = -((int32_t)m_pUrg->m_AngleFrontStep - startStep) * m_pUrg->m_pData->angularRes;
     m_pUrg->m_pData->maxAngle = (endStep - m_pUrg->m_AngleFrontStep) * m_pUrg->m_pData->angularRes;
 
     readLine(buffer); // Time Stamp
