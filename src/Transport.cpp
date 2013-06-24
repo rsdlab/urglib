@@ -57,7 +57,9 @@ bool Transport::receive(const char* expectedCommand)
   char command[3];
   int index = waitCommand(command);
   command[2] = 0;
+  std::cout << "Command:" << command << " Received." << std::endl;
   if (expectedCommand != NULL) {
+    std::cout << "Expect: " << expectedCommand << std::endl;
     while (expectedCommand[0] != command[0] || expectedCommand[1] != command[1]) {
       index = waitCommand(command);
     }
@@ -122,7 +124,7 @@ bool Transport::readLine(char* buffer) {
     }
     i++;
   }
-
+  //std::cout << "buffer:" << buffer << std::endl;
   return true;
 }
 
@@ -200,8 +202,11 @@ bool Transport::onCmdII()
   char buffer[128];
   readLine(buffer);
   readLine(buffer);
-
   readStringLine(buffer);
+  if( strncmp(buffer, "STAT", 4) == 0) { //There seems to be Error!
+    std::cerr << "Error/" << buffer << std::endl;
+    return false;
+  }
   if(strcmp(buffer, "OFF") == 0) {
     m_pUrg->m_LaserOn = false;
   } else {

@@ -178,7 +178,7 @@ namespace ssr {
     virtual void onPreSendCommand() {};
     virtual void onPostSendCommand() {};
 
-    void updateInfo();
+    bool updateInfo();
 
   private:
   };

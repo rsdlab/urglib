@@ -34,6 +34,11 @@ int main(int argc, char* argv[]) {
   ssr::UrgBase urg(argv[1], atoi(argv[2]));
 
   urg.startMeasure();
+
+
+  std::cout << "Waiting for Key Input" << std::endl;
+  char c;
+  std::cin >> c;
   return 0;
 }
 

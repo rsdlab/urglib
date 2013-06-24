@@ -25,14 +25,9 @@ UrgBase::UrgBase(const char* filename, int baudrate):
     std::cout << "Changing to SCIP2.0 ... Already SCIP2.0." << std::endl;
   }
   reset();
-  updateInfo();
-
-  m_pData = new RangeData(m_AngleEndStep - m_AngleStartStep);
-  m_pData->angularRes = 2 * M_PI / m_AngleDiv;
-  m_pData->minAngle = -(m_AngleFrontStep - m_AngleStartStep) * m_pData->angularRes;
-  m_pData->maxAngle = (m_AngleEndStep - m_AngleFrontStep) * m_pData->angularRes;
-  m_pData->minRange = m_MinMeasure;
-  m_pData->maxRange = m_MaxMeasure;
+  if(!updateInfo()) {
+    std::cerr << "There is error!" << std::endl;
+  }
 
   std::cout << "Vendor       :" << m_VendorInfo << std::endl;
   std::cout << "Product      :" << m_ProductInfo << std::endl;
@@ -48,6 +43,15 @@ UrgBase::UrgBase(const char* filename, int baudrate):
   std::cout << " ==> Resolution (360.0/AngleDiv): " << 360.0/m_AngleDiv << " [deg]" << std::endl;
   std::cout << "Scan RPM     :" << m_ScanRPM << " [rpm]" << std::endl;
   std::cout << " ==> Frequency:   " << m_ScanRPM/60 << " [Hz]" << std::endl;
+
+  m_pData = new RangeData(m_AngleEndStep - m_AngleStartStep);
+  m_pData->angularRes = 2 * M_PI / m_AngleDiv;
+  m_pData->minAngle = -(m_AngleFrontStep - m_AngleStartStep) * m_pData->angularRes;
+  m_pData->maxAngle = (m_AngleEndStep - m_AngleFrontStep) * m_pData->angularRes;
+  m_pData->minRange = m_MinMeasure;
+  m_pData->maxRange = m_MaxMeasure;
+
+
 }
 
 UrgBase::~UrgBase()
@@ -60,18 +64,21 @@ UrgBase::~UrgBase()
   delete m_pData;
 }
 
-void UrgBase::updateInfo()
+bool UrgBase::updateInfo()
 {
   Packet p1("VV");
   m_pTransport->transmit(p1);
-  m_pTransport->receive();
+  m_pTransport->receive("VV");
   Packet p2("II");
   m_pTransport->transmit(p2);
-  m_pTransport->receive();
+  if(!m_pTransport->receive("II")) {
+    return false;
+  }
   Packet p3("PP");
   m_pTransport->transmit(p3);
-  m_pTransport->receive();
+  m_pTransport->receive("PP");
 
+  return true;
 }
 
 void UrgBase::Run()
@@ -111,6 +118,7 @@ bool UrgBase::turnOff()
 
 bool UrgBase::reset()
 {
+  std::cout << "Reseting URG" << std::endl;
   Packet p("RS");
   m_pTransport->transmit(p);
   return m_pTransport->receive("RS");
