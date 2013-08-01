@@ -10,7 +10,7 @@ add_library(${PROJECT_NAME} SHARED ${_srcs})
 add_library(${PROJECT_NAME}_static STATIC ${_srcs})
 
 add_executable(${PROJECT_NAME}_demo ${_demo_srcs})
-target_link_libraries(${PROJECT_NAME}_demo ${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_NAME}_demo ${PROJECT_NAME}_static ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_demo ${PROJECT_NAME}_static
     EXPORT ${PROJECT_NAME}

@@ -11,9 +11,9 @@
 
 #ifdef WIN32
 #ifdef _WINDLL
-#define LIBTHREAD_API __declspec(dllexport)
+#define LIBTHREAD_API //__declspec(dllexport)
 #else
-#define LIBTHREAD_API __declspec(dllimport)
+#define LIBTHREAD_API //__declspec(dllimport)
 #endif
 
 #else

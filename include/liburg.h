@@ -5,9 +5,9 @@
 
 #ifdef WIN32
 #ifdef _WINDLL
-#define LIBURG_API __declspec(dllexport)
+#define LIBURG_API //__declspec(dllexport)
 #else // _WINDLL
-#define LIBURG_API __declspec(dllimport)
+#define LIBURG_API //__declspec(dllimport)
 #endif // _WINDLL
 #else // WIN32
 #define LIBURG_API 

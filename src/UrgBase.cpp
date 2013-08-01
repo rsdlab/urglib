@@ -153,4 +153,5 @@ bool UrgBase::startMeasure(uint32_t startStep,
   ///  std::cout << " - " << buffer << std::endl;
   m_pTransport->receive();
   Start();
+  return true;
 }
