@@ -8,6 +8,7 @@
 #ifdef WIN32
 #include <conio.h>
 #else
+#include <sys/select.h>
 #include <termios.h>
 struct termios m_oldTermios;
 #endif
@@ -90,7 +91,7 @@ static int myKbhit() {
   FD_SET( 0, &fdset );
   timeout.tv_sec = 0; 
   timeout.tv_usec = 0;
-  int ret = select(0+1 , &fdset , NULL , NULL , &timeout );
+  int ret = ::select(0+1 , &fdset , NULL , NULL , &timeout );
   return ret;
 #endif
 }
