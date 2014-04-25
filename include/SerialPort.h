@@ -122,7 +122,7 @@ namespace net {
        * @param filename Filename of Serial Port (eg., "COM0", "/dev/tty0")
        * @baudrate baudrate. (eg., 9600, 115200)
        */
-      SerialPort(const char* filename, int baudrate);
+      SerialPort(const char* filename, int32_t baudrate);
       
       /**
        * @brief Destructor

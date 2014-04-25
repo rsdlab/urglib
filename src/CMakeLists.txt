@@ -5,6 +5,9 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME})
 
 find_package(Threads)
+if (UNIX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC") 
+endif (UNIX)
 
 add_library(${PROJECT_NAME} SHARED ${_srcs})
 add_library(${PROJECT_NAME}_static STATIC ${_srcs})

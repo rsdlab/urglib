@@ -35,11 +35,15 @@ int main(int argc, char* argv[]) {
   ssr::UrgBase urg(argv[1], atoi(argv[2]));
 
   urg.startMeasure();
-
-
-  std::cout << "Waiting for Key Input" << std::endl;
+  int i = 0;
+  while(i++ < 100000);
   char c;
   std::cin >> c;
+
+  ssr::RangeData d = urg.getRangeData();
+  std::cout << "Length = " << (int)d.length << std::endl;
+  std::cout << "Waiting for Key Input" << std::endl;
+
   return 0;
 }
 

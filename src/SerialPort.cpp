@@ -38,7 +38,7 @@ using namespace net::ysuga;
 
 /******************************
  */
-SerialPort::SerialPort(const char* filename, const int baudrate)
+SerialPort::SerialPort(const char* filename, const int32_t baudrate)
 {
 #ifdef WIN32
 	DCB dcb;

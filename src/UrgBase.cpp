@@ -136,7 +136,7 @@ bool UrgBase::startMeasure(uint32_t startStep,
 			   bool extended,
 			   uint32_t scanCount)
 {
-  char cmd[2] = {'M', 'S'};
+  char cmd[3] = {'M', 'S', 0};
   if(extended) {
     cmd[1] = 'D';
   }
@@ -154,7 +154,7 @@ bool UrgBase::startMeasure(uint32_t startStep,
   buffer[2+4+4+2+1+2] = 0x0A;
 
   m_pSerialPort->Write(buffer, 2+4+4+2+1+2+1);
-  ///  std::cout << " - " << buffer << std::endl;
+  // std::cout << " startmeasure - " << buffer << std::endl;
   m_pTransport->receive();
   Start();
   return true;

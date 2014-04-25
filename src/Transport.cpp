@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <iostream>
 #include "Transport.h"
 #include "UrgBase.h"
@@ -54,6 +55,7 @@ int Transport::waitCommand(char* command) {
 
 bool Transport::receive(const char* expectedCommand)
 {
+  //  std::cout << "receiving data from urg" << std::endl;
   char command[3];
   int index = waitCommand(command);
   command[2] = 0;
@@ -65,7 +67,7 @@ bool Transport::receive(const char* expectedCommand)
     }
   }
 
-  //  std::cout << "Received Command: " << command << std::endl;
+  //std::cout << "Received Command: " << command << std::endl;
   m_Packet.cmd[0] = command[0];
   m_Packet.cmd[1] = command[1];
   switch(index) {
@@ -281,7 +283,7 @@ bool Transport::onCmdMD()
 
 bool Transport::onCmdMS()
 {
-  //  std::cout << "onCmdMS" << std::endl;
+  //std::cout << "onCmdMS" << std::endl;
   char firstLine[128];
   char buffer[128];
   readLine(firstLine);
@@ -289,17 +291,17 @@ bool Transport::onCmdMS()
   buffer[2] = 0;
   int stat = atoi(buffer);
   //std::cout << "Status : " << stat << std::endl;
-  //std::cout << " - " << firstLine << std::endl;
+  //  std::cout << " - " << firstLine << std::endl;
   if (stat == 99) {
     net::ysuga::MutexBinder b(m_pUrg->m_Mutex);
     m_pUrg->m_pData->clear();
     int32_t startStep = decodeCharactor(firstLine, 4);
     int32_t endStep   = decodeCharactor(firstLine+4, 4);
     int32_t clustorCount = decodeCharactor(firstLine+8, 2);
-    //    std::cout << " - " << startStep << " - " << endStep << std::endl;
+    //std::cout << " - " << startStep << " - " << m_pUrg->m_AngleFrontStep<< " - " << endStep << std::endl;
     m_pUrg->m_pData->minAngle = -((int32_t)m_pUrg->m_AngleFrontStep - startStep) * m_pUrg->m_pData->angularRes;
     m_pUrg->m_pData->maxAngle = (endStep - m_pUrg->m_AngleFrontStep) * m_pUrg->m_pData->angularRes;
-
+    // std::cout << " - " << m_pUrg->m_pData->minAngle << " - " << m_pUrg->m_pData->maxAngle << std::endl;
     readLine(buffer); // Time Stamp
     m_pUrg->m_pData->timestamp = decode6BitCharactor(buffer, 4);
     while(1) {
@@ -312,8 +314,10 @@ bool Transport::onCmdMS()
 	m_pUrg->m_pData->push(decode6BitCharactor(buffer+i, 2));
       }
     }
+  } else {
+    std::cout << "Unknown status " << stat << std::endl;
+    return false;
   }
-
-
+  
   return true;
 }
