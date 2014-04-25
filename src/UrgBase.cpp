@@ -1,5 +1,9 @@
+/**
+ * Author: Yuki Suga (ysuga@ysuga.net)
+ * copyright: yuki Suga
+ */
 
-
+#include <stdio.h> // for sprintf
 #include <iostream>
 
 #ifdef WIN32
