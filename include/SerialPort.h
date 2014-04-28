@@ -13,6 +13,7 @@
 
 #ifdef WIN32
 #include <windows.h>
+#include <stdint.h>
 #endif
 
 namespace net {
