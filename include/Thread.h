@@ -94,10 +94,10 @@ namespace net {
 
 		class LIBTHREAD_API MutexBinder {
 		private:
-		  Mutex m_mutex;
+		  Mutex& m_mutex;
 		public:
-		  MutexBinder(Mutex& m) {
-		    m_mutex = m;
+		MutexBinder(Mutex& m) : m_mutex(m){
+		    //m_mutex = m;
 		    m_mutex.Lock();
 		  }
 

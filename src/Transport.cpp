@@ -20,6 +20,8 @@ enum CMD {
 
 using namespace ssr;
 
+static bool cmdMSMD_errmsg(const int stat);
+
 Transport::Transport(net::ysuga::SerialPort* pSerialPort, UrgBase* pUrg) :
   m_pSerialPort(pSerialPort), m_pUrg(pUrg)
 {
@@ -277,6 +279,8 @@ bool Transport::onCmdMD()
 	m_pUrg->m_pData->push(decode6BitCharactor(buffer+i, 3));
       }
     }
+  } else {
+    return cmdMSMD_errmsg(stat);
   }
   return true;
 }
@@ -315,9 +319,61 @@ bool Transport::onCmdMS()
       }
     }
   } else {
-    std::cout << "Unknown status " << stat << std::endl;
-    return false;
+    return cmdMSMD_errmsg(stat);
   }
   
   return true;
+}
+
+
+static void msg(const char* msg) {
+  std::cout << "MS/MD Message: " << msg << std::endl;
+}
+
+static void msg(const char* msg, const int stat) {
+  std::cout << "MS/MD Message: " << msg << "(" << stat << ")" << std::endl;
+}
+
+static bool cmdMSMD_errmsg(const int stat) {
+
+
+  switch(stat) {
+  case 0:
+    msg("Properly received.");
+    return true;
+    break;
+  case 1:
+    msg("Start Step includes non-numeric charactor.");
+    break;
+  case 2:
+    msg("Stop Step includes non-numeric charactor.");
+    break;
+  case 3:
+    msg("Clustor Count includes non-numeric charactor.");
+    break;
+  case 4:
+    msg("Stop Step exeeds maximum step");
+    break;
+  case 5:
+    msg("Stop Step is less than Start Step.");
+    break;
+  case 6:
+    msg("Interval Count includes non-numeric charactor.");
+    break;
+  case 7:
+    msg("Scan Count includes non-numeric charactor.");
+    break;
+  default:
+    if (stat >= 21 && stat < 50) {
+      msg("Software Error with ", stat);
+    } else if (stat >= 50 && stat < 97) {
+      msg("Hardware Error with ", stat);
+    } else if (stat == 98) {
+      msg("Resumed");
+      return true;
+    } else {
+      msg("Unknown Error with ", stat);
+    }
+  }
+  return false;
 }
