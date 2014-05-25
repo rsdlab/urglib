@@ -2,7 +2,7 @@
 
 @timeout 5
 
-@call :BUILDW urglib
+@call :BUILDW urg
 
 
 @timeout 10
