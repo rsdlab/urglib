@@ -44,12 +44,14 @@ SerialPort::SerialPort(const char* filename, const int32_t baudrate)
 	DCB dcb;
 	m_hComm = 0;
 	m_hComm = CreateFileA(filename,	GENERIC_READ | GENERIC_WRITE,
-		0, NULL, OPEN_EXISTING,	0, NULL );
+		0, NULL, OPEN_EXISTING,	FILE_ATTRIBUTE_NORMAL, NULL );
 	if(m_hComm == INVALID_HANDLE_VALUE) {
 		m_hComm = 0;
 		throw ComOpenException();
 	}
 
+
+	this->FlushRxBuffer();
 
 	if(!GetCommState (m_hComm, &dcb)) {
 		CloseHandle(m_hComm); m_hComm = 0;
@@ -57,24 +59,50 @@ SerialPort::SerialPort(const char* filename, const int32_t baudrate)
 	}
 
 	dcb.BaudRate           = baudrate;
-    dcb.fParity            = 0;
-    dcb.fOutxCtsFlow       = 0;
-    dcb.fOutxDsrFlow       = 0;
+    //dcb.fParity            = 0;
+    //dcb.fOutxCtsFlow       = 0;
+    //dcb.fOutxDsrFlow       = 0;
     dcb.fDtrControl        = RTS_CONTROL_DISABLE;
-    dcb.fDsrSensitivity    = 0;
-    dcb.fTXContinueOnXoff  = 0;
-    dcb.fErrorChar         = 0;
-    dcb.fNull              = 0;
+    //dcb.fDsrSensitivity    = 0;
+   // dcb.fTXContinueOnXoff  = TRUE;
+	dcb.XonLim              = 512;
+	dcb.XoffLim             = 512;
+
+    //dcb.fErrorChar         = 0;
+    dcb.fNull              = 1;
     dcb.fRtsControl        = RTS_CONTROL_DISABLE;
-    dcb.fAbortOnError      = 0;
+    dcb.fAbortOnError      = TRUE;
     dcb.ByteSize           = 8;
     dcb.Parity             = NOPARITY;
     dcb.StopBits           = ONESTOPBIT;
 
+	LPVOID lpMsgBuf;
+
+	SetLastError(NO_ERROR);		//エラー情報をクリアする
+
+//ここにチェックしたい処理を書く
+
+
+
     if (!SetCommState (m_hComm, &dcb)) {
-      CloseHandle(m_hComm); m_hComm = 0;
+		CloseHandle(m_hComm); m_hComm = 0;
+	  
+		FormatMessage(				//エラー表示文字列作成
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+		FORMAT_MESSAGE_FROM_SYSTEM | 
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, GetLastError(),
+			 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+			 (LPTSTR) &lpMsgBuf, 0, NULL);
+
+		MessageBox(NULL, (const char*)lpMsgBuf, NULL, MB_OK);	//メッセージ表示
+
+		LocalFree(lpMsgBuf);
+
       throw ComStateException();
     }
+
+
 
 #else
   if((m_Fd = open(filename, O_RDWR /*| O_NOCTTY |O_NONBLOCK*/)) < 0) {
