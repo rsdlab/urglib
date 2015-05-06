@@ -4,19 +4,18 @@
  * @copyright RT Corp. 2012 All rights reserved.
  */
 
-#ifndef TIMESPEC_HEADER_INCLUDED
-#define TIMESPEC_HEADER_INCLUDED
-
+#pragma once
+#include "aqua.h"
 #include "type.h"
 
 /**
  * @if jp
  * @brief PCWrapperライブラリ用の名前空間
  * @else
- * @brief Namespace for PCWrapper Library
+ * @brief Namespace for Aqua Library
  * @endif
  */
-namespace pcwrapper {
+namespace ssr {
 
 	/**
 	 * @if jp
@@ -25,10 +24,10 @@ namespace pcwrapper {
 	 * 
 	 * @else
 	 * @class TimeSpec
-     *
+	 *
 	 * @endif
 	 */
-	struct DLL_API TimeSpec {
+	struct TimeSpec {
 	private:
 
 	public:
@@ -36,7 +35,11 @@ namespace pcwrapper {
 		uint32_t usec; //< Micro Second
 
 	public:
-
+		uint32_t getUsec() {
+		  return sec * 1000000 + usec;
+		}
+	public:
+		
 		/**
 		 * @if jp
 		 * @brief コンストラクタ
@@ -100,7 +103,7 @@ namespace pcwrapper {
 		 * @brief Larger Than Operator
 		 * @endif
 		 */
-		bool operator>(const pcwrapper::TimeSpec& timeSpec) const {
+		bool operator>(const TimeSpec& timeSpec) const {
 			if(this->sec > timeSpec.sec) {
 				return true;
 			} else if(this->sec == timeSpec.sec) {
@@ -118,7 +121,7 @@ namespace pcwrapper {
 		 * @brief Less Than Operator
 		 * @endif
 		 */
-		bool operator<(const pcwrapper::TimeSpec& timeSpec) const {
+		bool operator<(const TimeSpec& timeSpec) const {
 			if(this->sec < timeSpec.sec) {
 				return true;
 			} else if(this->sec == timeSpec.sec) {
@@ -136,7 +139,7 @@ namespace pcwrapper {
 		 * @brief Larger Than or Equal To operator
 		 * @endif
 		 */
-		bool operator>=(const pcwrapper::TimeSpec& timeSpec) const {
+		bool operator>=(const TimeSpec& timeSpec) const {
 			if(this->operator>(timeSpec)) {
 				return true;
 			} else if(this->operator==(timeSpec)) {
@@ -152,7 +155,7 @@ namespace pcwrapper {
 		 * @brief Less Than or Equal To Operator
 		 * @endif
 		 */
-		bool operator<=(const pcwrapper::TimeSpec& timeSpec) const {
+		bool operator<=(const TimeSpec& timeSpec) const {
 			if(this->operator<(timeSpec)) {
 				return true;
 			} else if(this->operator==(timeSpec)) {
@@ -161,19 +164,26 @@ namespace pcwrapper {
 			return false;
 		}
 	};
+
+
 }
 
 
-/**
- * @brief Global Object for ZERO time.
- */
-static const pcwrapper::TimeSpec ZEROTIME(0, 0);
+
+
+
+
 
 
 /**
  * @brief Global Object for ZERO time.
  */
-static const pcwrapper::TimeSpec INFINITETIME(0xFFFFFFFF, 0xFFFFFFFF);
+static const ssr::TimeSpec ZEROTIME(0, 0);
 
 
-#endif
+/**
+ * @brief Global Object for ZERO time.
+ */
+static const ssr::TimeSpec INFINITETIME(0xFFFFFFFF, 0xFFFFFFFF);
+
+

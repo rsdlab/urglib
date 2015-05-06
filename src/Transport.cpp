@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include "Transport.h"
+#include "Timer.h"
 #include "UrgBase.h"
 
 #define NUM_CMD 17
@@ -33,11 +34,11 @@ Transport::~Transport()
 }
 
 
-int Transport::waitCommand(char* command) {
+int Transport::waitCommand(char* command, int timeoutMilliSec) {
   int retval;
  transport_receive_start:
   while(true) {
-    readBlock(command+0, 1);
+    readBlock(command+0, 1, timeoutMilliSec);
     for( int i = 0; i < NUM_CMD;i++) {
       if(command[0] == cmd[i][0]) {
 	goto transport_receive_next;
@@ -55,7 +56,7 @@ int Transport::waitCommand(char* command) {
 }
 
 
-bool Transport::receive(const char* expectedCommand)
+bool Transport::receive(const char* expectedCommand, int timeoutMilliSec)
 {
   //  std::cout << "receiving data from urg" << std::endl;
   char command[3];
@@ -65,7 +66,7 @@ bool Transport::receive(const char* expectedCommand)
   if (expectedCommand != NULL) {
     //    std::cout << "Expect: " << expectedCommand << std::endl;
     while (expectedCommand[0] != command[0] || expectedCommand[1] != command[1]) {
-      index = waitCommand(command);
+      index = waitCommand(command, timeoutMilliSec);
     }
   }
 
@@ -74,15 +75,17 @@ bool Transport::receive(const char* expectedCommand)
   m_Packet.cmd[1] = command[1];
   switch(index) {
   case CMD_VV:
-    return onCmdVV();
+    return onCmdVV(timeoutMilliSec);
   case CMD_PP:
-    return onCmdPP();
+    return onCmdPP(timeoutMilliSec);
   case CMD_II:
-    return onCmdII();
+    return onCmdII(timeoutMilliSec);
   case CMD_MS:
-    return onCmdMS();
+    return onCmdMS(timeoutMilliSec);
   case CMD_MD:
-    return onCmdMD();
+    return onCmdMD(timeoutMilliSec);
+  case CMD_RS:
+    return onCmdRS(timeoutMilliSec);
   default:
     break;
 
@@ -110,37 +113,43 @@ bool Transport::transmit(const Packet& packet)
   return true;
 }
 
-bool Transport::readBlock(char* buffer, uint32_t size) {
+bool Transport::readBlock(char* buffer, uint32_t size, int timeoutMilliSec) {
+	ssr::Timer timer;
+	timer.tick();
+	ssr::TimeSpec currentTime;
   while(m_pSerialPort->GetSizeInRxBuffer() < 1) {
-    net::ysuga::Thread::Sleep(10);
+    net::ysuga::Thread::Sleep(1);
+	timer.tack(&currentTime);
+	if(currentTime.getUsec() > timeoutMilliSec*1000) {
+		throw ssr::TimeOutException();
+	}
   }
   m_pSerialPort->Read(buffer, 1);
   return true;
 }
 
-bool Transport::readLine(char* buffer) {
+bool Transport::readLine(char* buffer, int timeoutMilliSec) {
   int i = 0;
   while(1) {
-    readBlock(buffer+i, 1);
+    readBlock(buffer+i, 1, timeoutMilliSec);
     if(buffer[i] == 0x0A) {
       buffer[i] = 0;
       break;
     }
     i++;
   }
-  //std::cout << "buffer:" << buffer << std::endl;
   return true;
 }
 
-bool Transport::readStringLine(char* buffer) {
-  bool ret = readLine(buffer);
+bool Transport::readStringLine(char* buffer, int timeoutMilliSec) {
+  bool ret = readLine(buffer, timeoutMilliSec);
   buffer[strlen(buffer)-2] = 0;
   return ret;
 }
 
-uint32_t Transport::readIntLine() {
+uint32_t Transport::readIntLine(int timeoutMilliSec) {
   char buffer[128];
-  readStringLine(buffer);
+  readStringLine(buffer, timeoutMilliSec);
   for(int i= 0;i < strlen(buffer);i++) {
     if(buffer[i] == ':') {
       return atoi(buffer+i+1);
@@ -149,66 +158,66 @@ uint32_t Transport::readIntLine() {
   return atoi(buffer);
 }
 
-bool Transport::onCmdVV() {
+bool Transport::onCmdVV(int timeoutMilliSec) {
   //  std::cout << "onCmdVV" << std::endl;
   char buffer[128];
-  readLine(buffer);
-  readLine(buffer);
-  readStringLine(m_pUrg->m_VendorInfo);
-  readStringLine(m_pUrg->m_ProductInfo);
-  readStringLine(m_pUrg->m_FirmwareVersion);
-  readStringLine(m_pUrg->m_ProtocolVersion);
-  readStringLine(m_pUrg->m_SerialNumber);
-  readLine(buffer);
+  readLine(buffer, timeoutMilliSec);
+  readLine(buffer, timeoutMilliSec);
+  readStringLine(m_pUrg->m_VendorInfo, timeoutMilliSec);
+  readStringLine(m_pUrg->m_ProductInfo, timeoutMilliSec);
+  readStringLine(m_pUrg->m_FirmwareVersion, timeoutMilliSec);
+  readStringLine(m_pUrg->m_ProtocolVersion, timeoutMilliSec);
+  readStringLine(m_pUrg->m_SerialNumber, timeoutMilliSec);
+  readLine(buffer, timeoutMilliSec);
   
   return true;
 }
 
 
-bool Transport::startSCIP20() {
+bool Transport::startSCIP20(int timeoutMilliSec) {
   static const char key[8] = "SCIP2.0";
   m_pSerialPort->Write(key, 7);
   char lf = 0x0a;
   m_pSerialPort->Write(&lf, 1);
   char buffer[128];
-  readLine(buffer);
-  readLine(buffer);
+  readLine(buffer, timeoutMilliSec);
+  readLine(buffer, timeoutMilliSec);
   if(buffer[0] == '0' && buffer[1] == 0) {
-    readLine(buffer);
+    readLine(buffer, timeoutMilliSec);
     return true;
   } else if (buffer[0] == '0' && buffer[1] == '1') {
     return false;
   }
-  std::cout << "startSCIP20 : unknown return value:" << buffer << std::endl;
+  std::cout << "[UrgBase] StartSCIP20 : unknown return value:" << buffer << std::endl;
   return false;
 }
 
-bool Transport::onCmdPP() {
+bool Transport::onCmdPP(int timeoutMilliSec) {
   char buffer[128];
-  readLine(buffer);
-  readLine(buffer);
+  readLine(buffer, timeoutMilliSec);
+  readLine(buffer, timeoutMilliSec);
 
   readStringLine(m_pUrg->m_ModelInfo);
-  m_pUrg->m_MaxMeasure = readIntLine();
-  m_pUrg->m_MinMeasure = readIntLine();
-  m_pUrg->m_AngleDiv   = readIntLine();
-  m_pUrg->m_AngleStartStep = readIntLine();
-  m_pUrg->m_AngleEndStep   = readIntLine();
-  m_pUrg->m_AngleFrontStep = readIntLine();
-  m_pUrg->m_ScanRPM    = readIntLine();
-  readStringLine(m_pUrg->m_RotateDirection);
+  m_pUrg->m_MaxMeasure = readIntLine(timeoutMilliSec);
+  m_pUrg->m_MinMeasure = readIntLine(timeoutMilliSec);
+  m_pUrg->m_AngleDiv   = readIntLine(timeoutMilliSec);
+  m_pUrg->m_AngleStartStep = readIntLine(timeoutMilliSec);
+  m_pUrg->m_AngleEndStep   = readIntLine(timeoutMilliSec);
+  m_pUrg->m_AngleFrontStep = readIntLine(timeoutMilliSec);
+  m_pUrg->m_ScanRPM    = readIntLine(timeoutMilliSec);
+  readStringLine(m_pUrg->m_RotateDirection, timeoutMilliSec);
   return true;
 }
 
 
-bool Transport::onCmdII()
+bool Transport::onCmdII(int timeoutMilliSec)
 {
   char buffer[128];
-  readLine(buffer);
-  readLine(buffer);
+  readLine(buffer, timeoutMilliSec);
+  readLine(buffer, timeoutMilliSec);
   readStringLine(buffer);
   if( strncmp(buffer, "STAT", 4) == 0) { //There seems to be Error!
-    std::cerr << "Error/" << buffer << std::endl;
+    std::cerr << "[UrgBase] Error/" << buffer << std::endl;
     return false;
   }
   if(strcmp(buffer, "OFF") == 0) {
@@ -216,11 +225,11 @@ bool Transport::onCmdII()
   } else {
     m_pUrg->m_LaserOn = true;
   }
-  readStringLine(m_pUrg->m_ScanSpeed);
-  readStringLine(m_pUrg->m_ScanMode);
-  readStringLine(m_pUrg->m_SerialCommunicationSpeed);
-  readStringLine(m_pUrg->m_SensorClock);
-  readStringLine(m_pUrg->m_SensorStatus);
+  readStringLine(m_pUrg->m_ScanSpeed, timeoutMilliSec);
+  readStringLine(m_pUrg->m_ScanMode, timeoutMilliSec);
+  readStringLine(m_pUrg->m_SerialCommunicationSpeed, timeoutMilliSec);
+  readStringLine(m_pUrg->m_SensorClock, timeoutMilliSec);
+  readStringLine(m_pUrg->m_SensorStatus, timeoutMilliSec);
   
   return true;
 }
@@ -247,13 +256,13 @@ int32_t Transport::decodeCharactor(char* buffer, uint32_t size)
 
 
 
-bool Transport::onCmdMD()
+bool Transport::onCmdMD(int timeoutMilliSec)
 {
   //  std::cout << "onCmdMD" << std::endl;
   char firstLine[128];
   char buffer[128];
-  readLine(firstLine);
-  readLine(buffer);
+  readLine(firstLine, timeoutMilliSec);
+  readLine(buffer, timeoutMilliSec);
   buffer[2] = 0;
   int stat = atoi(buffer);
   //  std::cout << "Status : " << stat << std::endl;
@@ -269,7 +278,7 @@ bool Transport::onCmdMD()
     readBlock(buffer, 5);
     m_pUrg->m_pData->timestamp = decode6BitCharactor(buffer, 4);
     while(1) {
-      readLine(buffer);
+      readLine(buffer, timeoutMilliSec);
       int len = strlen(buffer);
       //      std::cout << " - Length: " << len << " data received." << std::endl;
       if(len == 0) {
@@ -285,13 +294,13 @@ bool Transport::onCmdMD()
   return true;
 }
 
-bool Transport::onCmdMS()
+bool Transport::onCmdMS(int timeoutMilliSec)
 {
   //std::cout << "onCmdMS" << std::endl;
   char firstLine[128];
   char buffer[128];
-  readLine(firstLine);
-  readLine(buffer);
+  readLine(firstLine, timeoutMilliSec);
+  readLine(buffer, timeoutMilliSec);
   buffer[2] = 0;
   int stat = atoi(buffer);
   //std::cout << "Status : " << stat << std::endl;
@@ -306,10 +315,10 @@ bool Transport::onCmdMS()
     m_pUrg->m_pData->minAngle = -((int32_t)m_pUrg->m_AngleFrontStep - startStep) * m_pUrg->m_pData->angularRes;
     m_pUrg->m_pData->maxAngle = (endStep - m_pUrg->m_AngleFrontStep) * m_pUrg->m_pData->angularRes;
     // std::cout << " - " << m_pUrg->m_pData->minAngle << " - " << m_pUrg->m_pData->maxAngle << std::endl;
-    readLine(buffer); // Time Stamp
+    readLine(buffer, timeoutMilliSec); // Time Stamp
     m_pUrg->m_pData->timestamp = decode6BitCharactor(buffer, 4);
     while(1) {
-      readLine(buffer);
+      readLine(buffer, timeoutMilliSec);
       int len = strlen(buffer);
       if(len == 0) {
 	break;
@@ -325,13 +334,28 @@ bool Transport::onCmdMS()
   return true;
 }
 
+bool Transport::onCmdRS(int timeoutMilliSec)
+{
+  char firstLine[128];
+  char buffer[128];
+  readLine(firstLine, timeoutMilliSec);
+  readLine(buffer, timeoutMilliSec);
+  if(buffer[0] == '0' && buffer[1] == '0' && buffer[2] == 'P') {
+	  return true;
+  } else {
+	  return false;
+  }
+}
+
+
+
 
 static void msg(const char* msg) {
-  std::cout << "MS/MD Message: " << msg << std::endl;
+  std::cout << "[UrgBase] MS/MD Message: " << msg << std::endl;
 }
 
 static void msg(const char* msg, const int stat) {
-  std::cout << "MS/MD Message: " << msg << "(" << stat << ")" << std::endl;
+  std::cout << "[UrgBase] MS/MD Message: " << msg << "(" << stat << ")" << std::endl;
 }
 
 static bool cmdMSMD_errmsg(const int stat) {

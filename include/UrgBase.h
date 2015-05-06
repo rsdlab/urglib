@@ -13,6 +13,28 @@
 namespace ssr {
   //class Translator;
 
+	  class BufferOverrunException : std::exception {
+  private:
+    std::string msg;
+    
+  public:
+    BufferOverrunException(const char* msg) {
+      this->msg = "BufferOverrun: ";
+      this->msg += msg;
+    }
+
+    BufferOverrunException() {
+      this->msg = "BufferOverrun";
+    }
+    
+    ~BufferOverrunException() throw() {
+    }
+    
+  public:
+    virtual const char* what() const throw() {
+      return msg.c_str();
+    }
+  };
 
   class RangeData {
   public:
@@ -32,7 +54,7 @@ namespace ssr {
     uint32_t timestamp;
     uint32_t *range;
     uint32_t length;
-
+	uint32_t maxLength;
   public:
     double minAngle;
     double maxAngle;
@@ -44,6 +66,7 @@ namespace ssr {
     RangeData(uint32_t size) :
     timestamp(0) , length(0) {
       range = new uint32_t[size];
+	  maxLength = size;
       pose.x = pose.y = pose.z = 0;
       orientation.r = orientation.p = orientation.y = 0;
     }
@@ -51,7 +74,8 @@ namespace ssr {
     RangeData(const RangeData& rangeData) {
       this->timestamp = rangeData.timestamp;
       this->length = rangeData.length;
-      range = new uint32_t[length];
+	  this->maxLength = rangeData.maxLength;
+      range = new uint32_t[maxLength];
       for(int i=  0;i < length;i++) {
 	range[i] = rangeData.range[i];
       }
@@ -68,7 +92,8 @@ namespace ssr {
     void operator=(const RangeData& rangeData) {
       this->timestamp = rangeData.timestamp;
       this->length = rangeData.length;
-      range = new uint32_t[length];
+	  this->maxLength = rangeData.maxLength;
+	  range = new uint32_t[rangeData.maxLength];
       for(int i=  0;i < length;i++) {
 	range[i] = rangeData.range[i];
       }
@@ -91,6 +116,9 @@ namespace ssr {
     }
 
     void push(uint32_t range_data) {
+		if(length >= maxLength) {
+			throw ssr::BufferOverrunException();
+		}
       range[length] = range_data;
       length++;
     }
@@ -100,7 +128,7 @@ namespace ssr {
   private:
     Transport  *m_pTransport;
     net::ysuga::SerialPort *m_pSerialPort;
-    bool m_Endflag;
+    volatile bool m_Endflag;
     uint8_t m_Interval;
 
     char m_VendorInfo[128];
@@ -117,6 +145,7 @@ namespace ssr {
     uint32_t   m_AngleFrontStep;
     uint32_t   m_ScanRPM;
     char m_RotateDirection[32];
+	int m_DefaultTimeoutTime;
 
     bool m_LaserOn;
     char m_ScanSpeed[128];
@@ -156,7 +185,7 @@ namespace ssr {
       m_Mutex.Unlock();
     }
 
-    UrgBase(const char* filename, int baudrate = BAUDRATE);
+    UrgBase(const char* filename, int baudrate = BAUDRATE, int defaultTimeoutMilliSec = 1000);
 
     virtual ~UrgBase();
 
@@ -170,6 +199,10 @@ namespace ssr {
 
   public:
     virtual void Run();
+	void Stop() {
+	  m_Endflag = true;
+	  Join();
+	}
 
   private:
     //    friend class Translator;

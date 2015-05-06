@@ -28,42 +28,49 @@ namespace ssr {
     }
   };
 
+#define INFINITY_TIME 0xFFFF
+
   class UrgBase;
   class Transport {
 
   private:
     Packet m_Packet;
-  private:
     net::ysuga::SerialPort* m_pSerialPort;
     UrgBase* m_pUrg;    
-  public:
-    Packet& getPacket() {return m_Packet;}
+
   public:
     Transport(net::ysuga::SerialPort* pSerialPort, UrgBase* pUrg);
     virtual ~Transport();
     
-    int waitCommand(char* command);
-    bool readLine(char* buffer);
-    bool readStringLine(char* buffer);
-    uint32_t readIntLine();
+    int waitCommand(char* command, int timeoutMilliSe=INFINITY_TIME);
 
-    bool receive(const char* expectedCmd = NULL);
+    bool receive(const char* expectedCmd = NULL, int timeoutMilliSe=INFINITY_TIME);
+	
+    bool receive(int timeoutMilliSec=INFINITY_TIME) {
+		return receive(NULL, timeoutMilliSec);
+	}
+
     bool transmit(const Packet& packet);
 
-    bool startSCIP20();
+    bool startSCIP20(int timeoutMilliSec=INFINITY_TIME);
 
-    
   private:
-    bool readBlock(char *buffer, uint32_t size);
+    bool readBlock(char *buffer, uint32_t size, int timeoutMilliSec=INFINITY_TIME);
+    uint32_t readIntLine( int timeoutMilliSec=INFINITY_TIME);
 
     int32_t decodeCharactor(char* buffer, uint32_t size);
     uint32_t decode6BitCharactor(char* buffer, uint32_t size);
+	bool readLine(char* buffer, int timeoutMilliSec=INFINITY_TIME);
+    bool readStringLine(char* buffer, int timeoutMilliSec=INFINITY_TIME);
 
-    bool onCmdMD();
-    bool onCmdMS();
-    bool onCmdVV();
-    bool onCmdPP();
-    bool onCmdII();
+	Packet& getPacket() {return m_Packet;}
+
+    bool onCmdMD(int timeoutMilliSec=INFINITY_TIME);
+    bool onCmdMS(int timeoutMilliSec=INFINITY_TIME);
+    bool onCmdVV(int timeoutMilliSec=INFINITY_TIME);
+    bool onCmdPP(int timeoutMilliSec=INFINITY_TIME);
+    bool onCmdII(int timeoutMilliSec=INFINITY_TIME);
+    bool onCmdRS(int timeoutMilliSec=INFINITY_TIME);
   };
   
 }
