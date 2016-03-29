@@ -198,8 +198,8 @@ bool Transport::onCmdPP(int timeoutMilliSec) {
   readLine(buffer, timeoutMilliSec);
 
   readStringLine(m_pUrg->m_ModelInfo);
-  m_pUrg->m_MaxMeasure = readIntLine(timeoutMilliSec);
   m_pUrg->m_MinMeasure = readIntLine(timeoutMilliSec);
+  m_pUrg->m_MaxMeasure = readIntLine(timeoutMilliSec);
   m_pUrg->m_AngleDiv   = readIntLine(timeoutMilliSec);
   m_pUrg->m_AngleStartStep = readIntLine(timeoutMilliSec);
   m_pUrg->m_AngleEndStep   = readIntLine(timeoutMilliSec);
