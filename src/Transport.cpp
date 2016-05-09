@@ -265,8 +265,8 @@ bool Transport::onCmdMD()
     int32_t clustorCount = decodeCharactor(firstLine+8, 2);
     m_pUrg->m_pData->minAngle = -((int32_t)m_pUrg->m_AngleFrontStep - startStep) * m_pUrg->m_pData->angularRes;
     m_pUrg->m_pData->maxAngle = (endStep - m_pUrg->m_AngleFrontStep) * m_pUrg->m_pData->angularRes;
-
-    readBlock(buffer, 5);
+    
+    readLine(buffer); // Time Stamp
     m_pUrg->m_pData->timestamp = decode6BitCharactor(buffer, 4);
     while(1) {
       readLine(buffer);
