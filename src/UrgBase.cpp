@@ -73,7 +73,7 @@ UrgBase::UrgBase(const char* filename, int baudrate, int defaultTimeoutMilliSec)
 
 UrgBase::~UrgBase()
 {
-	if(this->m_Endflag) {
+	if(!this->m_Endflag) {
 		std::cout << "[UrgBase] Stopping Urg Background Job" << std::endl;
 		Stop();
 		std::cout << "[UrgBase] Stopped." << std::endl;
