@@ -46,19 +46,23 @@ UrgBase::UrgBase(const char* filename, int baudrate, int defaultTimeoutMilliSec)
     std::cerr << "[UrgBase] UpdateInfo failed." << std::endl;
   }
 
-  std::cout << "[UrgBase] Vendor       :" << m_VendorInfo << std::endl;
-  std::cout << "[UrgBase] Product      :" << m_ProductInfo << std::endl;
-  std::cout << "[UrgBase] Firmware Ver.:" << m_FirmwareVersion << std::endl;
-  std::cout << "[UrgBase] Product Ver. :" << m_ProtocolVersion << std::endl;
-  std::cout << "[UrgBase] Serial No.   :" << m_SerialNumber << std::endl;
-  std::cout << "[UrgBase] Model Info   :" << m_ModelInfo << std::endl;
-  std::cout << "[UrgBase] Max Measure  :" << m_MaxMeasure << " [mm]" << std::endl;
-  std::cout << "[UrgBase] Min Measure  :" << m_MinMeasure << " [mm]" << std::endl;
-  std::cout << "[UrgBase] Scan Starts  :" << m_AngleStartStep << " [step]" << std::endl;
-  std::cout << "[UrgBase] Scan Ends    :" << m_AngleEndStep << " [step]" << std::endl;
-  std::cout << "[UrgBase] Angle Div    :" << m_AngleDiv << " [step]" << std::endl;
+  std::cout << "[UrgBase] Vendor              :" << m_VendorInfo << std::endl;
+  std::cout << "[UrgBase] Product             :" << m_ProductInfo << std::endl;
+  std::cout << "[UrgBase] Firmware Ver.       :" << m_FirmwareVersion << std::endl;
+  std::cout << "[UrgBase] Product Ver.        :" << m_ProtocolVersion << std::endl;
+  std::cout << "[UrgBase] Serial No.          :" << m_SerialNumber << std::endl;
+  std::cout << "[UrgBase] Status              :" << m_SensorStatus << std::endl;
+  std::cout << "[UrgBase] Motor Speed         :" << m_ScanSpeed << std::endl;
+  std::cout << "[UrgBase] Bit Rate for RS232C :" << m_SerialCommunicationSpeed << std::endl;
+  std::cout << "[UrgBase] Measurement Mode    :" << m_ScanMode << std::endl;
+  std::cout << "[UrgBase] Model Info          :" << m_ModelInfo << std::endl;
+  std::cout << "[UrgBase] Max Measure         :" << m_MaxMeasure << " [mm]" << std::endl;
+  std::cout << "[UrgBase] Min Measure         :" << m_MinMeasure << " [mm]" << std::endl;
+  std::cout << "[UrgBase] Scan Starts         :" << m_AngleStartStep << " [step]" << std::endl;
+  std::cout << "[UrgBase] Scan Ends           :" << m_AngleEndStep << " [step]" << std::endl;
+  std::cout << "[UrgBase] Angle Div           :" << m_AngleDiv << " [step]" << std::endl;
   std::cout << "[UrgBase]  ==> Resolution (360.0/AngleDiv): " << 360.0/m_AngleDiv << " [deg]" << std::endl;
-  std::cout << "[UrgBase] Scan RPM     :" << m_ScanRPM << " [rpm]" << std::endl;
+  std::cout << "[UrgBase] Scan RPM            :" << m_ScanRPM << " [rpm]" << std::endl;
   std::cout << "[UrgBase]  ==> Frequency:   " << m_ScanRPM/60 << " [Hz]" << std::endl;
 
   m_pData = new RangeData(m_AngleEndStep - m_AngleStartStep+1);

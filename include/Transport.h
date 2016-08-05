@@ -60,8 +60,8 @@ namespace ssr {
 
     int32_t decodeCharactor(char* buffer, uint32_t size);
     uint32_t decode6BitCharactor(char* buffer, uint32_t size);
-	bool readLine(char* buffer, int timeoutMilliSec=INFINITY_TIME);
-    bool readStringLine(char* buffer, int timeoutMilliSec=INFINITY_TIME);
+	bool readLine(char* buffer, int timeoutMilliSec=INFINITY_TIME, int maxChar=128);
+    bool readStringLine(char* buffer, int timeoutMilliSec=INFINITY_TIME, int maxChar=128);
 
 	Packet& getPacket() {return m_Packet;}
 

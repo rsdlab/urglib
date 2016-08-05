@@ -148,13 +148,20 @@ namespace ssr {
 	int m_DefaultTimeoutTime;
 
     bool m_LaserOn;
+	char m_SensorModel[128];
     char m_ScanSpeed[128];
     char m_ScanMode[128];
     char m_SerialCommunicationSpeed[128];
     char m_SensorClock[128];
     char m_SensorStatus[128];
+	bool m_Trouble;
 
   protected:
+
+  public:
+	  bool isTrouble() {
+		  return m_Trouble;
+	  }
 
   public:
     void setOrientation(double r, double p, double y) {

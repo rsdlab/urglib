@@ -13,6 +13,7 @@
 struct termios m_oldTermios;
 #endif
 
+#include "Thread.h"
 #include "liburg.h"
 
 // 特殊キーの定義
@@ -34,15 +35,19 @@ int main(int argc, char* argv[]) {
   std::cout << "URG DEMO" << std::endl;
   ssr::UrgBase urg(argv[1], atoi(argv[2]));
 
-  urg.startMeasure();
+  urg.startMeasure(0, 65535, 1, 0, true, 0);// uint32_t startStep = 0, uint32_t stopStep = 65535, uint32_t clustorCount = 1, uint32_t intervalCount = 0, bool extended = false, uint32_t scanCount = 00, );
   int i = 0;
-  while(i++ < 100000);
+
+  std::cout << "Sleeping 3 seconds.." << std::endl;
+  net::ysuga::Thread::Sleep(3000);
+  ssr::RangeData d = urg.getRangeData();
+  std::cout << "Data Length = " << (int)d.length << std::endl;
+  std::cout << "Waiting for Key Input" << std::endl;
+
+  std::cout << "Press A to Exit" << std::endl;
   char c;
   std::cin >> c;
 
-  ssr::RangeData d = urg.getRangeData();
-  std::cout << "Length = " << (int)d.length << std::endl;
-  std::cout << "Waiting for Key Input" << std::endl;
 
   return 0;
 }

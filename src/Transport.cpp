@@ -117,20 +117,25 @@ bool Transport::readBlock(char* buffer, uint32_t size, int timeoutMilliSec) {
 	ssr::Timer timer;
 	timer.tick();
 	ssr::TimeSpec currentTime;
-  while(m_pSerialPort->GetSizeInRxBuffer() < 1) {
+  while(m_pSerialPort->GetSizeInRxBuffer() < size) {
     net::ysuga::Thread::Sleep(1);
 	timer.tack(&currentTime);
 	if(currentTime.getUsec() > timeoutMilliSec*1000) {
 		throw ssr::TimeOutException();
 	}
   }
-  m_pSerialPort->Read(buffer, 1);
+  m_pSerialPort->Read(buffer, size);
   return true;
 }
 
-bool Transport::readLine(char* buffer, int timeoutMilliSec) {
+bool Transport::readLine(char* buffer, int timeoutMilliSec, int maxChar) {
   int i = 0;
   while(1) {
+	  if (i == maxChar-1) {
+		  buffer[i] = 0;
+		  return false;
+	  }
+
     readBlock(buffer+i, 1, timeoutMilliSec);
     if(buffer[i] == 0x0A) {
       buffer[i] = 0;
@@ -141,9 +146,11 @@ bool Transport::readLine(char* buffer, int timeoutMilliSec) {
   return true;
 }
 
-bool Transport::readStringLine(char* buffer, int timeoutMilliSec) {
-  bool ret = readLine(buffer, timeoutMilliSec);
-  buffer[strlen(buffer)-2] = 0;
+bool Transport::readStringLine(char* buffer, int timeoutMilliSec, int maxChar) {
+  bool ret = readLine(buffer, timeoutMilliSec, maxChar);
+  if (strlen(buffer) >= 2) {
+	  buffer[strlen(buffer) - 2] = 0;
+  }
   return ret;
 }
 
@@ -215,22 +222,49 @@ bool Transport::onCmdII(int timeoutMilliSec)
   char buffer[128];
   readLine(buffer, timeoutMilliSec);
   readLine(buffer, timeoutMilliSec);
-  readStringLine(buffer);
-  if( strncmp(buffer, "STAT", 4) == 0) { //There seems to be Error!
-    std::cerr << "[UrgBase] Error/" << buffer << std::endl;
-    return false;
+
+  while (1) {
+	  char stringBuffer[255];
+	  readStringLine(stringBuffer, timeoutMilliSec);
+
+	  if (strlen(stringBuffer) == 0) {
+		  break;
+	  }
+
+	  if (strncmp(stringBuffer, "STAT", 4) == 0) {
+		  strcpy(m_pUrg->m_SensorStatus, stringBuffer);
+		  if (strncmp(m_pUrg->m_SensorStatus + 5, "Trouble", 7) == 0) {
+			  m_pUrg->m_Trouble = true;
+		  }
+		  else {
+			  m_pUrg->m_Trouble = false;
+		  }
+	  }
+	  else if (strncmp(stringBuffer, "TIME", 4) == 0) {
+		  strcpy(m_pUrg->m_SensorClock, stringBuffer);
+	  }
+	  else if (strncmp(stringBuffer, "MODL", 4) == 0) {
+		  strcpy(m_pUrg->m_SensorModel, stringBuffer);
+	  }
+	  else if (strncmp(stringBuffer, "LASR", 4) == 0) {
+		  if (strcmp(stringBuffer+5, "OFF") == 0) {
+			  m_pUrg->m_LaserOn = false;
+		  }
+		  else {
+			  m_pUrg->m_LaserOn = true;
+		  }
+	  }
+	  else if (strncmp(stringBuffer, "SCSP", 4) == 0) {
+		  strcpy(m_pUrg->m_ScanSpeed, stringBuffer);
+	  }
+	  else if (strncmp(stringBuffer, "MESM", 4) == 0) {
+		  strcpy(m_pUrg->m_ScanMode, stringBuffer);
+	  }
+	  else if (strncmp(stringBuffer, "SBPS", 4) == 0) {
+		  strcpy(m_pUrg->m_SerialCommunicationSpeed, stringBuffer);
+	  }
   }
-  if(strcmp(buffer, "OFF") == 0) {
-    m_pUrg->m_LaserOn = false;
-  } else {
-    m_pUrg->m_LaserOn = true;
-  }
-  readStringLine(m_pUrg->m_ScanSpeed, timeoutMilliSec);
-  readStringLine(m_pUrg->m_ScanMode, timeoutMilliSec);
-  readStringLine(m_pUrg->m_SerialCommunicationSpeed, timeoutMilliSec);
-  readStringLine(m_pUrg->m_SensorClock, timeoutMilliSec);
-  readStringLine(m_pUrg->m_SensorStatus, timeoutMilliSec);
-  
+
   return true;
 }
 
@@ -277,16 +311,33 @@ bool Transport::onCmdMD(int timeoutMilliSec)
     
     readLine(buffer); // Time Stamp
     m_pUrg->m_pData->timestamp = decode6BitCharactor(buffer, 4);
+	//std::cout << " - TS: " << m_pUrg->m_pData->timestamp << " data received." << std::endl;
+
+	char tempStrBuffer[3];
+	int fullfilledBytes = 0;
     while(1) {
       readLine(buffer, timeoutMilliSec);
-      int len = strlen(buffer);
-      //      std::cout << " - Length: " << len << " data received." << std::endl;
+      int len = strlen(buffer); // Have SUM data
+	  //std::cout << " - Length: " << len << " data received." << std::endl;
       if(len == 0) {
 	break;
-      }
+	  }
+
+	  len--; // Have SUM byte.
+
+	  for (int i = 0; i < len; i++) {
+		  tempStrBuffer[fullfilledBytes] = buffer[i];
+		  fullfilledBytes++;
+		  if (fullfilledBytes == 3) {
+			  m_pUrg->m_pData->push(decode6BitCharactor(tempStrBuffer, 3));
+			  fullfilledBytes = 0;
+		  }
+	  }
+
+	  /*
       for(int i = 0;i+3 < len;i += 3) {
-	m_pUrg->m_pData->push(decode6BitCharactor(buffer+i, 3));
-      }
+		  m_pUrg->m_pData->push(decode6BitCharactor(buffer + i, 3));
+	  }*/
     }
   } else {
     return cmdMSMD_errmsg(stat);
@@ -296,25 +347,20 @@ bool Transport::onCmdMD(int timeoutMilliSec)
 
 bool Transport::onCmdMS(int timeoutMilliSec)
 {
-  //std::cout << "onCmdMS" << std::endl;
   char firstLine[128];
   char buffer[128];
   readLine(firstLine, timeoutMilliSec);
   readLine(buffer, timeoutMilliSec);
   buffer[2] = 0;
   int stat = atoi(buffer);
-  //std::cout << "Status : " << stat << std::endl;
-  //  std::cout << " - " << firstLine << std::endl;
   if (stat == 99) {
     net::ysuga::MutexBinder b(m_pUrg->m_Mutex);
     m_pUrg->m_pData->clear();
     int32_t startStep = decodeCharactor(firstLine, 4);
     int32_t endStep   = decodeCharactor(firstLine+4, 4);
     int32_t clustorCount = decodeCharactor(firstLine+8, 2);
-    //std::cout << " - " << startStep << " - " << m_pUrg->m_AngleFrontStep<< " - " << endStep << std::endl;
     m_pUrg->m_pData->minAngle = -((int32_t)m_pUrg->m_AngleFrontStep - startStep) * m_pUrg->m_pData->angularRes;
     m_pUrg->m_pData->maxAngle = (endStep - m_pUrg->m_AngleFrontStep) * m_pUrg->m_pData->angularRes;
-    // std::cout << " - " << m_pUrg->m_pData->minAngle << " - " << m_pUrg->m_pData->maxAngle << std::endl;
     readLine(buffer, timeoutMilliSec); // Time Stamp
     m_pUrg->m_pData->timestamp = decode6BitCharactor(buffer, 4);
     while(1) {
